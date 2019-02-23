@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t hyedocker/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run hyedocker/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t hyedocker/multi-client ./client
+  - docker build -t hyedocker/multi-nginx ./nginx
+  - docker build -t hyedocker/multi-server ./server
+  - docker build -t hyedocker/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push hyedocker/multi-client
+  - docker push hyedocker/multi-nginx
+  - docker push hyedocker/multi-server
+  - docker push hyedocker/multi-worker
